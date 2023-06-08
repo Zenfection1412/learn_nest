@@ -1,3 +1,5 @@
+import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
 import {
   Body,
@@ -27,13 +29,14 @@ export class UserController {
   }
 
   @Post('create')
-  create(@Body('name') body) {
-    return this.UserService.create(body);
+  create(@Body() createUserDto: CreateUserDto) {
+    console.log(createUserDto instanceof CreateUserDto);
+    return this.UserService.create(createUserDto);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body) {
-    return this.UserService.update(id, body);
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.UserService.update(id, updateUserDto);
   }
 
   @Delete(':id')

@@ -1,9 +1,11 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { PrismaService } from 'src/prisma.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UserService {
+  constructor(private prisma: PrismaService) {}
+
   async findAll() {
     try {
       const users = await prisma.users.findMany();
@@ -26,15 +28,10 @@ export class UserService {
     }
   }
 
-  async create(data: any) {
-    try {
-      const result = await prisma.users.create({
-        data,
-      });
-      return result;
-    } catch (exception) {
-      throw new HttpException(`Error: ${exception}`, 500);
-    }
+  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.user.create({
+      data,
+    });
   }
 
   async update(id: string, data: any) {

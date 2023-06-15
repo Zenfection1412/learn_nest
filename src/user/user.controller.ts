@@ -11,36 +11,41 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto/pagination-query.dto';
+import { Public } from 'src/common/decorators/public.decorator/public.decorator';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly UserService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
+  @Public()
   @Get()
-  findAll(@Query() paginationQuery) {
-    // const { limit, offset } = paginationQuery;
-    return this.UserService.findAll();
-    // return `This action returns all users with limit: ${limit} and offset: ${offset}`;
+  findAll(@Query() paginationQuery: PaginationQueryDto) {
+    return this.userService.users(paginationQuery);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.UserService.findOne(id);
+    return this.userService.users({
+      where: { id: String(id) },
+    });
   }
 
   @Post('create')
   create(@Body() createUserDto: CreateUserDto) {
-    console.log(createUserDto instanceof CreateUserDto);
-    return this.UserService.create(createUserDto);
+    return this.userService.createUser(createUserDto);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.UserService.update(id, updateUserDto);
+    return this.userService.updateUser({
+      where: { id: String(id) },
+      data: updateUserDto,
+    });
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.UserService.remove(id);
+    return this.userService.deleteUser({ id: String(id) });
   }
 }

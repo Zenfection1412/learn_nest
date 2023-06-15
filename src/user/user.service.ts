@@ -1,63 +1,69 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'src/prisma.service';
-import { Prisma } from '@prisma/client';
+import { users, Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    try {
-      const users = await prisma.users.findMany();
-      return users;
-    } catch (exception) {
-      throw new HttpException(`Error: ${exception}`, 500);
-    }
-  }
-
-  async findOne(id: string) {
-    try {
-      const user = await prisma.users.findUnique({
-        where: {
-          id: id,
-        },
-      });
-      return user;
-    } catch (exception) {
-      throw new NotFoundException(`User #${id} not found`);
-    }
-  }
-
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    return this.prisma.user.create({
-      data,
+  async users(params: {
+    skip?: number;
+    take?: number;
+    // cursor?: Prisma.usersWhereUniqueInput;
+    where?: Prisma.usersWhereInput;
+    // orderBy?: Prisma.usersOrderByWithRelationInput;
+  }): Promise<users[]> {
+    // const { skip, take, cursor, where, orderBy } = params;
+    const { skip, take, where } = params;
+    const result = await this.prisma.users.findMany({
+      skip,
+      take,
+      // cursor,
+      where,
+      // orderBy,
     });
+    if (result.length == 0) {
+      throw new NotFoundException('No users found');
+    }
+    return result;
   }
 
-  async update(id: string, data: any) {
+  async createUser(data: Prisma.usersCreateInput): Promise<users> {
     try {
-      const result = await prisma.users.update({
-        where: {
-          id: id,
-        },
+      const result = await this.prisma.users.create({
         data,
       });
       return result;
-    } catch (exception) {
-      throw new HttpException(`Error: ${exception}`, 500);
+    } catch (e) {
+      if (e.code == 'P2002') {
+        throw new HttpException('There is a unique constraint violation', 400);
+      }
+      throw new HttpException(e, 400);
     }
   }
 
-  async remove(id: string) {
+  async updateUser(params: {
+    where: Prisma.usersWhereUniqueInput;
+    data: Prisma.usersUpdateInput;
+  }): Promise<users> {
+    const { where, data } = params;
     try {
-      const result = await prisma.users.delete({
-        where: {
-          id: id,
-        },
+      return await this.prisma.users.update({
+        data,
+        where,
       });
-      return result;
-    } catch (exception) {
-      throw new HttpException(`Error: ${exception}`, 500);
+    } catch (error) {
+      throw new NotFoundException("This user doesn't exist");
+    }
+  }
+
+  async deleteUser(where: Prisma.usersWhereUniqueInput): Promise<users> {
+    try {
+      return await this.prisma.users.delete({
+        where,
+      });
+    } catch (error) {
+      throw new NotFoundException("This user doesn't exist");
     }
   }
 }

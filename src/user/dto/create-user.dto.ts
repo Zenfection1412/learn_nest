@@ -1,8 +1,9 @@
-import { IsString, IsBoolean } from 'class-validator';
+import { Role } from '@prisma/client';
+import { IsString, IsEnum } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
-  readonly name: string;
+  readonly fullname: string;
 
   @IsString()
   readonly email: string;
@@ -10,6 +11,6 @@ export class CreateUserDto {
   @IsString()
   readonly phone: string;
 
-  @IsBoolean()
-  readonly isAdmin?: boolean;
+  @IsEnum(Role)
+  readonly role?: Role;
 }

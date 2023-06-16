@@ -3,55 +3,51 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-type ordersCustomer {
-  fullname String
-  phone    String
-  address  String
-  province String
-  district String
-  ward     String
-}
+model InfoCustomer {
+  fullname  String
+  phone     String
+  location  String
+  province  String
+  district  String
+  ward      String
+  address   address? @relation(fields: [addressId], references: [id])
+  addressId String?
 
-type ordersProducts {
-  id       String @db.ObjectId
-  quantity Int
-  discount Int
-  image    String
-  name     String
-  price    Float
+  @@unique([fullname, phone, location])
 }
 
 model users {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  role      Role      @default(USER)
-  email     String
-  username  String?
+  id        String    @id @default(uuid())
+  role      UserRole      @default(USER)
+  email     String    @unique
+  username  String?   @unique
   phone     String?   @unique
   fullname  String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  addresses address[]
+  address   address[]
   orders    orders[]
 
-  @@index([email], name: "email")
+  @@index([email, username, phone])
 }
 
 model address {
-  id        String         @id @default(auto()) @map("_id") @db.ObjectId
-  customer  ordersCustomer
-  isDefault Boolean?       @default(false)
-  user      users?         @relation(fields: [userId], references: [id])
-  userId    String?        @db.ObjectId
+  id           String         @id @default(uuid())
+  isDefault    Boolean        @default(false)
+  user         users          @relation(fields: [userId], references: [id])
+  userId       String
+  InfoCustomer InfoCustomer[]
+  orders       orders[]
 
   @@unique([userId, isDefault])
 }
 
 model categories {
-  id       String     @id @default(auto()) @map("_id") @db.ObjectId
+  id       String     @id @default(uuid())
   isActive Boolean    @default(true)
   slug     String     @unique
   title    String
@@ -62,13 +58,13 @@ model categories {
 }
 
 model products {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  category    String     @db.ObjectId
+  id          String     @id @default(uuid())
+  category    String
   categories  categories @relation(fields: [category], references: [id])
   images      String[]
   name        String
   description String
-  price       Float
+  price       Decimal    @db.Money
   discount    Int
   quantity    Int
   sold        Int
@@ -80,22 +76,35 @@ model products {
 }
 
 model orders {
-  id           String           @id @default(auto()) @map("_id") @db.ObjectId
-  customer     ordersCustomer
-  orderID      String
-  orderDate    DateTime
-  products     ordersProducts[]
-  order_status OrderStatus      @default(PENDING)
-  total_price  Float
-  user         users?           @relation(fields: [userId], references: [id])
-  userId       String?          @db.ObjectId
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
+  id             String           @id @default(uuid())
+  location       address          @relation(fields: [locationId], references: [id])
+  locationId     String
+  orderID        String
+  orderDate      DateTime
+  order_status   OrderStatus      @default(PENDING)
+  total_price    Decimal          @db.Money
+  user           users?           @relation(fields: [userId], references: [id])
+  userId         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  ordersProducts ordersProducts[]
 
   @@unique([userId, orderID])
 }
 
-enum Role {
+model ordersProducts {
+  quantity Int
+  discount Int
+  image    String
+  name     String
+  price    Decimal @db.Money
+  order    orders  @relation(fields: [orderId], references: [id])
+  orderId  String
+
+  @@unique([orderId, name])
+}
+
+enum UserRole {
   ADMIN
   USER
 }

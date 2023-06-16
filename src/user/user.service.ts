@@ -1,6 +1,6 @@
 import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { users, Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma.service';
+import { PrismaService } from 'nestjs-prisma';
 
 @Injectable()
 export class UserService {
@@ -10,20 +10,30 @@ export class UserService {
     skip?: number;
     take?: number;
     // cursor?: Prisma.usersWhereUniqueInput;
-    where?: Prisma.usersWhereInput;
+    // where?: Prisma.usersWhereInput;
     // orderBy?: Prisma.usersOrderByWithRelationInput;
   }): Promise<users[]> {
     // const { skip, take, cursor, where, orderBy } = params;
-    const { skip, take, where } = params;
+    const { skip, take } = params;
     const result = await this.prisma.users.findMany({
       skip,
       take,
       // cursor,
-      where,
+      // where,
       // orderBy,
     });
     if (result.length == 0) {
       throw new NotFoundException('No users found');
+    }
+    return result;
+  }
+
+  async user(where: Prisma.usersWhereUniqueInput): Promise<users> {
+    const result = await this.prisma.users.findUnique({
+      where,
+    });
+    if (!result) {
+      throw new NotFoundException('No user found');
     }
     return result;
   }
